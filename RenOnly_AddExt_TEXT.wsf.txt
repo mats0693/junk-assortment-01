@@ -1,0 +1,231 @@
+'mktxt.wsf
+'■■  ファイルリネーム  ■■
+'                                   Copyright (C)2016 Matsumoto
+'                                          http://
+'
+'このプログラムはGPLに基づいて配布しています。
+'  GPLについて   http://ja.wikipedia.org/wiki/GPL
+'  GPL契約書     http://www.gnu.org/licenses/gpl.txt
+'  GPL契約書和訳 http://opensource.jp/gpl/gpl.ja.html
+'
+'このプログラムの改変元のGPLライセンスプログラムは以下の通り。
+'  著作者    ：TomoSoft (http://TomoSoft.NET)
+'  プログラム： 簡易ファイルバックアップスクリプト(FBackup.wsf)
+'               簡易ファイルバックアップスクリプト複数ファイルラッパー(FBackupM.wsf)
+'
+'変更履歴
+'  2016/05/17 新規作成
+'
+<job>
+
+'################################################################################
+'# スクリプト
+'################################################################################
+<script language="VBScript">
+Option Explicit
+
+'アラート表示
+Const SHOW_ALERT = True
+
+Call Main()
+WScript.Quit() 'おわり
+
+'----------------------------------------
+'-- メイン・ルーチン
+'----------------------------------------
+Private Function Main()
+	
+	Dim strSourcePath		  '元ファイルフルパス
+
+	Dim FSO 				  'FileSystemObject
+	Dim Arg 				  '引数
+
+	Set FSO = CreateObject("Scripting.FileSystemObject")
+
+	'引数を確認
+	If WScript.Arguments.Count = 0 Then
+		'使用方法を表示
+		WScript.Arguments.ShowUsage
+	End If
+
+	'ファイルの順次処理
+	For Each Arg In WScript.Arguments
+		strSourcePath = Arg
+		'ファイルが存在したら実行処理を呼び出す
+		If FSO.FileExists(strSourcePath) Then
+			Call MainWork(strSourcePath)
+		End If
+	Next
+	
+	''MsgBox "変換処理が完了しました。"
+
+End Function
+
+'----------------------------------------
+'-- 1ファイル処理のメイン・ルーチン
+'----------------------------------------
+Private Function MainWork(strMotoFullName)
+	'ファイルが処理されたらtrue、それ以外はfalseが返る
+	
+	'元ファイル
+	Dim strMotoPath
+	Dim strMotoName
+	Dim strMotoNameBase
+	Dim strMotoNameExt
+	'戻り値
+	Dim rtn
+	
+	'処理用オブジェクト
+	Dim FSO 'FileSystemObject
+	Set FSO = CreateObject("Scripting.FileSystemObject")
+
+	'引数がファイルであることの確認
+	If Not FSO.FileExists(strMotoFullName) Then
+		If SHOW_ALERT Then
+			MsgBox "対象がファイルではありません。", vbQuestion + vbSystemModal
+		End If
+		MainWork = false: Exit Function
+	End If
+
+	'元ファイル名の取得・編集
+	strMotoPath = FSO.GetParentFolderName(strMotoFullName) & "\"
+	strMotoName = FSO.GetFileName(strMotoFullName)
+	strMotoNameBase = FSO.GetBaseName(strMotoFullName)
+	strMotoNameExt = FSO.GetExtensionName(strMotoFullName)
+
+	'処理対象ファイルでない
+	If LCase(strMotoNameExt) = "text" Then
+		If SHOW_ALERT Then
+			MsgBox "[ERROR]処理対象ファイルではありません。既に対象の拡張子のファイルです。" & strMotoName, vbSystemModal
+		End If
+		MainWork = false: Exit Function
+	End If
+
+'	'処理対象ファイルでない
+'	If LCase(strMotoNameExt) <> "sql" And _
+'		LCase(strMotoNameExt) <> "pkb" And _
+'		LCase(strMotoNameExt) <> "pks" Then
+'		If SHOW_ALERT Then
+'			MsgBox "[ERROR]処理対象ファイルではありません。" & strMotoName, vbSystemModal
+'		End If
+'		MainWork = false: Exit Function
+'	End If
+	
+	'ファイルが存在しない
+	If Not FSO.FileExists(strMotoFullName) Then
+		If SHOW_ALERT Then
+			MsgBox "[ERROR]処理対象ファイルが存在しません。" & strMotoName, vbSystemModal
+		End If
+		MainWork = false: Exit Function
+	End If
+
+	Dim strSakiFullName
+	'strSakiFullName = strMotoFullName & ".text"
+	strSakiFullName = strMotoFullName & ".my.temp.log.text"
+	
+	'既にファイルが存在する
+	If FSO.FileExists(strSakiFullName) Then
+		If SHOW_ALERT Then
+			MsgBox "[ERROR]変更先ファイルが既に存在します。" & strSakiFullName, vbSystemModal
+		End If
+		MainWork = false: Exit Function
+	End If
+
+	'ファイルのリネーム(移動)
+	FSO.MoveFile strMotoFullName, strSakiFullName
+	
+	MainWork = rtn: Exit Function
+End Function
+
+'----------------------------------------
+'-- 出力先のファイルパスを返す
+'----------------------------------------
+Private Function getSakiFullName(strMotoFullName)
+	Dim FSO 'FileSystemObject
+	Set FSO = CreateObject("Scripting.FileSystemObject")
+	Dim strSakiFullName
+	Dim strSakiPath
+	Dim strSakiName
+	Dim strSakiNameBase
+	Dim strSakiNameExt
+
+	Dim strDateTime
+	Dim strDate
+	Dim strTime
+	Dim strMotoDateTime
+	Dim strWorkDateTime
+	Dim dateMoto
+	Dim dateWork
+	dateMoto = FSO.GetFile(strMotoFullName).DateLastModified
+	dateWork = Now()
+	'元ファイルの更新時刻文字列 yyyymmdd_hhmmss
+	strMotoDateTime = MyFormatDateTime(dateMoto)
+	'システム時刻文字列 yyyymmdd_hhmmss
+	strWorkDateTime = MyFormatDateTime(dateWork)
+	
+	'先ファイル名の作成
+	strSakiPath = FSO.GetParentFolderName(strMotoFullName) & "\" '元ファイルと同じパス
+	strSakiNameBase = FSO.GetBaseName(strMotoFullName)		'元ファイルのベース名
+	strSakiNameExt = FSO.GetExtensionName(strMotoFullName)	'元ファイルの拡張子
+	strSakiName = strSakiNameBase & "_" & strMotoDateTime & "." & strSakiNameExt
+	''strSakiName = strSakiNameBase & "_" & strMotoDateTime & "[at" & strWorkDateTime & "]" & "." & strSakiNameExt
+	strSakiFullName = strSakiPath & strSakiName
+
+	getSakiFullName = strSakiFullName
+	Exit Function
+End Function
+
+
+'----------------------------------------
+' 日付の固定フォーマット
+' @param  workDate(日付型)
+' @return yyyymmdd_hhmmss書式の日付文字列
+'----------------------------------------
+Function MyFormatDateTime(workDate)
+	dim strMotoDateTime
+	dim strDate
+	dim strTime
+	strDate = RIGHT(YEAR(workDate), 4) _
+	        & RIGHT("0" & MONTH(workDate), 2) _
+	        & RIGHT("0" & DAY(workDate), 2) 
+	strTime = RIGHT("0" & HOUR(workDate), 2) _
+	        & RIGHT("0" & MINUTE(workDate), 2) _
+	        & RIGHT("0" & SECOND(workDate), 2)
+	strMotoDateTime = strDate & "_" & strTime
+	MyFormatDateTime = strMotoDateTime
+End Function
+
+'----------------------------------------
+'-- フォルダ作成
+'----------------------------------------
+Private Sub CreateFolder(ByVal Folder)
+	Dim FSO 'FileSystemObject
+	Set FSO = CreateObject("Scripting.FileSystemObject")
+	Dim ParentFolder
+	'WScript.Echo Folder
+	ParentFolder = FSO.GetParentFolderName(Folder)
+	If ParentFolder <> "" Then If Not FSO.FolderExists(ParentFolder) Then CreateFolder ParentFolder
+	If Not FSO.FolderExists(Folder) Then FSO.CreateFolder Folder
+End Sub
+
+</script>
+
+'################################################################################
+'# Usage用定義
+'################################################################################
+<runtime>
+	<description>引数に指定されたファイルの変換を行う。</description>
+	<unnamed
+		Name = "SOURCE"
+		helpstring = "対象ファイル名"
+		type = "string"
+		Required = "true"
+		many = "true"
+	/>
+	<example>
+	例: 処理対象ファイルをドラッグアンドドロップする｡
+	例: ～.wsf D:\Hoge.xls
+	</example>
+</runtime>
+
+</job>
