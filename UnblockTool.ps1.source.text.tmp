@@ -1,0 +1,52 @@
+<#
+    指定されたファイル / フォルダの
+    ファイルセキュリティ（Zone.Identifier）を解除する
+#>
+
+param (
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$Targets
+)
+
+if (-not $Targets -or $Targets.Count -eq 0) {
+    Write-Output "引数にファイルまたはフォルダを指定してください。"
+    exit 1
+}
+
+foreach ($target in $Targets) {
+
+    if (-not (Test-Path $target)) {
+        Write-Warning "存在しません: $target"
+        continue
+    }
+
+    # フォルダの場合
+    if ((Get-Item $target) -is [System.IO.DirectoryInfo]) {
+
+        Write-Output "フォルダ処理中: $target"
+
+        Get-ChildItem -Path $target -Recurse -File -ErrorAction SilentlyContinue |
+            ForEach-Object {
+                try {
+                    Unblock-File -Path $_.FullName -ErrorAction Stop
+                    Write-Output "  解除: $($_.FullName)"
+                }
+                catch {
+                    Write-Warning "  失敗: $($_.FullName)"
+                }
+            }
+
+    }
+    # ファイルの場合
+    else {
+        try {
+            Unblock-File -Path $target -ErrorAction Stop
+            Write-Output "解除: $target"
+        }
+        catch {
+            Write-Warning "失敗: $target"
+        }
+    }
+}
+
+Write-Output "処理完了"
