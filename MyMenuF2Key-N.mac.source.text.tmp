@@ -1,0 +1,344 @@
+$Arg0 = getarg(0);
+$Arg1 = getarg(1);
+if(iskeydown(0x25)){
+	call openThis();
+}else if(iskeydown(0x26)){
+	call frameworkmenu();
+}else if(iskeydown(0x10)){
+	call frameworkmenu();
+}else{
+	call main();
+}
+endmacro;
+openThis:
+	openfile currentmacrofilename;
+	endmacro;
+void:
+	return;
+openFileWork:
+	message $$1;
+	openfile $$1;
+	endmacro;
+main:
+	$Arg0 = getarg(0);
+	#MenuCtlNo = 0;
+	#MenuPreNo = 0;
+	call init_env();
+	call init_date();
+	call MainWorkMenu();
+	if( $return=="" ) endmacro;
+	$sReturn = $return;
+	insert $sReturn;
+endmacro;
+init_env:
+	$thismac_usedir_root = "";
+	#j=0; $macdir[#j]="key-assign";
+	#j=1; $macdir[#j]="key-assign\\bin";
+	#j=2; $macdir[#j]="TKI_macros";
+	#j=3; $macdir[#j]="";
+	#j=4; $macdir[#j]="";
+	#j=5; $macdir[#j]="";
+	#j=6; $macdir[#j]="";
+	#j=7; $macdir[#j]="myrepworks";
+	#j=8; $macdir[#j]="mymenu";
+	#j=9; $macdir[#j]="mytips";
+	return;
+rptchr:
+	$$chr1 =  $$1;
+	##rptcnt = ##2;
+	$$s1 = "";
+	##i=0;
+	while(##i<##rptcnt){
+		$$s1 = $$s1 + $$chr1;
+		##i = ##i + 1;
+	}
+	return $$s1;
+frameworkmenu:
+	#i=-1;
+	#i=#i+1;#mID[#i]=5001;$mTp[#i]="S";$menulbl[#i]="[メインMenu]";$optS[#i]="";#optN[#i]=0;
+	#i=#i+1;#mID[#i]=9001;$mTp[#i]="S";$menulbl[#i]="[OpenThis]";$optS[#i]="";#optN[#i]=0;
+	#menucnt=#i+1;
+	menuarray $menulbl, #menucnt;
+	#result = result;
+	#selIdx = #result-1;
+	#selMenuID = #mID[#selIdx];
+	#selPreMenuID = #pID[#selIdx];
+	$selLbl = $menulbl[#selIdx];
+	$selTyp = $mTp[#selIdx];
+	$selOptStr = $optS[#selIdx];
+	#selOptNo = #optN[#selIdx];
+	if( result == 0 ) endmacro;
+		if($selTyp!=""){
+			if($selTyp=="HI"){
+				insert $selOptStr;
+			}else if($selTyp=="HS"){
+			}else if($selTyp=="A"){
+				insert $selOptStr;
+				if(#selOptNo==1){setclipboard $selOptStr;}
+				endmacro;
+			}else if($selTyp=="I"){
+				insert $selOptStr;
+				if(#selOptNo==1){setclipboard $selOptStr;}
+				endmacro;
+			}else if($selTyp=="C"){
+				setclipboard $selOptStr;
+				message $selOptStr;
+				endmacro;
+			}else if($selTyp=="S"){
+				if(#selMenuID==9001){call openThis();}
+				else if(#selMenuID==-1){call subvoid(); endmacro;}
+				else if(#selMenuID==9002){call subvoid(); endmacro;}
+				else if(#selMenuID==5001){
+					call MainWorkMenu();
+					if( $return=="" ) endmacro;
+					$sReturn = $return;
+					insert $sReturn;
+				}
+			}else if($selTyp=="O"){
+				call openFileWork $selOptStr;
+			}else if($selTyp=="E"){
+				$rootdir = macrodir + "\\";
+				execmacro $rootdir + $selOptStr;
+			}else if($selTyp=="E0"){
+				$rootdir = macrodir + "\\" + $thismac_usedir_root + "\\";
+				execmacro $rootdir + $selOptStr;
+			}else if($selTyp=="E1"){
+				$rootdir = currentmacrodirectory + "\\" + $thismac_usedir_root + "\\";
+				execmacro $rootdir + $selOptStr;
+			}else{
+			}
+		}
+	return;
+Replace:
+$work = $$1;
+$from = $$2;
+$to = $$3;
+#len_fr = strlen($from);
+#pos_fr = strstr( $work, $from );
+while(#pos_fr > 0){
+	$work_before = leftstr($work, #pos_fr);
+	$work_after = midstr($work, #pos_fr + #len_fr, strlen($work)+1);
+	$work = $work_before + $to + $work_after;
+	#pos_fr = strstr( $work, $from );
+}
+return $work;
+subvoid:
+	return;
+sub1001:
+	message "sub1001";
+	return;
+getBasename2Base:
+	$$basename2_base = "";
+	$$ext = "";
+	##iPosEndDot = strrstr( basename2, "." );
+	if(##iPosEndDot > 0){
+		$$basename2_base = leftstr( basename2, ##iPosEndDot );
+		$$ext = rightstr(basename2, strlen(basename2) - ##iPosEndDot -1);
+	}else{
+		$$basename2_base = basename2;
+		$$ext = "";
+	}
+return $$basename2_base;
+getBasename2Ext:
+	$$basename2_base = "";
+	$$ext = "";
+	##iPosEndDot = strrstr( basename2, "." );
+	if(##iPosEndDot > 0){
+		$$basename2_base = leftstr( basename2, ##iPosEndDot );
+		$$ext = rightstr(basename2, strlen(basename2) - ##iPosEndDot -1);
+	}else{
+		$$basename2_base = basename2;
+		$$ext = "";
+	}
+return $$ext;
+getTimestampStr:
+	$$timestamp = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second;
+return $$timestamp;
+getTimestampStrHH0000:
+	$$timestamp = year + "/" + month + "/" + day + " " + hour + ":" + "00" + ":" + "00";
+return $$timestamp;
+getTimestampStr_Text1:
+	$$timestamp = year + "" + month + "" + day + "_" + hour + "" + minute + "" + second;
+return $$timestamp;
+getTodayStr:
+	$$timestamp = year + "/" + month + "/" + day;
+return $$timestamp;
+getTodayStrDot:
+	$$timestamp = year + "." + month + "." + day;
+return $$timestamp;
+init_date_sub01:
+	$ys = year;
+	$ms = month;
+	$ds = day;
+	$hs = hour;
+	$ns = minute;
+	$ss = second;
+	$af = midstr("AMPM" ,(val($hs) / 12) * 2 , 2);
+	$afj = "午" + midstr("前後" ,(val($hs) / 12) * 2 , 2);
+	$ymd00 = $ys+"/"+$ms+"/"+$ds;
+	$ymd01 = $ys+"."+$ms+"."+$ds;
+	$ymd02 = $ys+"-"+$ms+"-"+$ds;
+	$hms00 = $hs+":"+$ns+":"+$ss;
+	$hms01 = $hs+":"+$ns;
+	$ymdhms00 = $ymd00 + " " + $hms00;
+	$ymdhms01 = $ys+""+$ms+""+$ds+"_"+$hs+""+$ns+""+$ss;
+return;
+MainWorkMenu:
+	#i=-1;
+	call MakeMenuContFixHeader();
+	if(#MenuCtlNo==0){
+		call MakeMenuCont000();
+	}else{
+		if(#MenuCtlNo==1000){
+			call MakeMenuHistCont1000();
+		}else if(#MenuCtlNo==1001){ call MakeMenuCont1001();
+		}else if(#MenuCtlNo==9600){ call MakeMenuMacro9600();
+		}else if(#MenuCtlNo==9900){ call MakeMenuMacro9900();
+		}else{
+			endmacro;
+		}
+	}
+	call MakeMenuContFixFotter();
+	#menucnt = #i+1;
+	menuarray $mnlbl, #menucnt;
+	#result = result;
+	#selIdx = #result-1;
+	#selMenuID = #mID[#selIdx];
+	#selPreMenuID = #pID[#selIdx];
+	$selLbl = $mnlbl[#selIdx];
+	$selTyp = $mTp[#selIdx];
+	$selOptStr = $optS[#selIdx];
+	#selOptNo = #optN[#selIdx];
+	$selParam1 = $p1[#selIdx];
+	$selParam2 = $p2[#selIdx];
+	$selParam3 = $p3[#selIdx];
+	$selParam4 = $p4[#selIdx];
+	$selParam5 = $p5[#selIdx];
+	$sReturn = "";
+	if ($selOptStr=="") {
+		$selOptStr = $selLbl;
+	}
+	if( result == 0 ) endmacro;
+	if($selTyp!=""){
+		if($selTyp=="SO"){
+			if(#selMenuID==9001){call openThis();}
+			endmacro;
+		}else if($selTyp=="S"){
+			if(#selMenuID==9001){call openThis();}
+			endmacro;
+		}else if($selTyp=="LICENSE"){
+			call getHidemaruLicense();
+			$stmp = $$return;
+			if(#selOptNo==1){setclipboard $stmp; message $stmp; }
+			if(#selOptNo==2){insert $stmp;}
+			endmacro;
+		}else if($selTyp=="MS"){
+			#MenuCtlNo = #selMenuID;
+			call MainWorkMenu();
+			endmacro;
+		}else if($selTyp=="SC"){
+			searchdown $selOptStr, casesense, hilight;
+		}else if($selTyp=="SCW"){
+			searchdown $selOptStr, casesense, word, hilight;
+		}else if($selTyp=="SCR"){
+			searchdown $selOptStr, casesense, regular, hilight;
+		}else if(($selTyp=="A")||($selTyp=="I")){
+			insert $selOptStr;
+			if(#selOptNo==1){setclipboard $selOptStr;}
+			endmacro;
+		}else if(($selTyp=="CI")||($selTyp=="IC")){
+			setclipboard $selOptStr;
+			insert $selOptStr;
+			if(#selOptNo==1){setclipboard $selOptStr;}
+			endmacro;
+		}else if(($selTyp=="C")||($selTyp=="AC")){
+			setclipboard $selOptStr;
+			message $selOptStr;
+			endmacro;
+		}else if($selTyp=="O"){
+			call openFileWork $selOptStr;
+		}else if($selTyp=="E"){
+			$rootdir = macrodir + "\\";
+			execmacro $rootdir + $selOptStr;
+		}else if($selTyp=="E0"){
+			$rootdir = macrodir + "\\" + $thismac_usedir_root + "\\";
+			execmacro $rootdir + $selOptStr;
+		}else if($selTyp=="E1"){
+			$rootdir = currentmacrodirectory + "\\" + $thismac_usedir_root + "\\";
+			execmacro $rootdir + $selOptStr;
+		}else if($selTyp=="EE"){
+			$rootdir = macrodir + "\\" + $macdir[#selOptNo] + "\\";
+			if($selParam1!="" && $selParam2!="" && $selParam3!=""){
+				execmacro $rootdir + $selOptStr, $selParam1, $selParam2, $selParam3;
+			}else if($selParam1!="" && $selParam2!=""){
+				execmacro $rootdir + $selOptStr, $selParam1, $selParam2;
+			}else if($selParam1!=""){
+				execmacro $rootdir + $selOptStr, $selParam1;
+			}else{
+				execmacro $rootdir + $selOptStr;
+			}
+			endmacro;
+		}else if($selTyp=="EP1"){
+			execmacro macrodir + "\\" + $selOptStr, $selParam1;
+			endmacro;
+		}else if($selTyp=="EP2"){
+			execmacro macrodir + "\\" + $selOptStr, $selParam1, $selParam2;
+			endmacro;
+		}else if($selTyp=="EP3"){
+			execmacro macrodir + "\\" + $selOptStr, $selParam1, $selParam2, $selParam3;
+			endmacro;
+		}else if($selTyp=="EP4"){
+			execmacro macrodir + "\\" + $selOptStr, $selParam1, $selParam2, $selParam3, $selParam4;
+			endmacro;
+		}else if($selTyp=="EP5"){
+			execmacro macrodir + "\\" + $selOptStr, $selParam1, $selParam2, $selParam3, $selParam4, $selParam5;
+			endmacro;
+		}else if($selTyp=="EPX"){
+			execmacro macrodir + "\\" + $selOptStr, currentmacrobasename;
+			endmacro;
+		}else if($selTyp=="EEPX"){
+			$rootdir = macrodir + "\\" + $macdir[#selOptNo] + "\\";
+			execmacro $rootdir + $selOptStr, currentmacrobasename;
+		}else{
+			if(#selMenuID==1){
+			}else if(#selMenuID==2){
+			}else if(#selMenuID==3){
+			}else{
+				message "指定なし";
+			}
+		}
+	}
+	return $sReturn;
+MakeMenuContFixHeader:
+	if($Arg0!="" && rightstr($Arg0,4)==".mac"){
+		#i=#i+1;#mID[#i]=#MenuPreNo;$mTp[#i]="E"; #optN[#i]=0;$optS[#i]=$Arg0;$mnlbl[#i]="[ルートマクロに戻る]";
+	}
+	if(#MenuCtlNo!=0){
+		#i=#i+1;#mID[#i]=#MenuPreNo;$mTp[#i]="MS"; #optN[#i]=0;$optS[#i]="";$mnlbl[#i]="[前に戻る]";
+	}
+return;
+MakeMenuContFixFotter:
+	#i=#i+1;#mID[#i]=9000;$mTp[#i]="SO";$optS[#i]="";#optN[#i]=0; $mnlbl[#i]="----------";
+	#i=#i+1;#mID[#i]=9001;$mTp[#i]="SO";$optS[#i]="";#optN[#i]=0; $mnlbl[#i]="[OpenThis]";
+return;
+MakeMenuCont000:
+	call MakeMenuCont000Top();
+	#i=#i+1;#mID[#i]=9000;$mTp[#i]=""; $mnlbl[#i]="------------------------------";$optS[#i]="";#optN[#i]=0;
+return;
+MakeMenuMacro9600:
+	#i=#i+1;#mID[#i]=9000;$mTp[#i]=""; $mnlbl[#i]="-----";$optS[#i]="";#optN[#i]=0;
+	#i=#i+1;#mID[#i]=0;$mTp[#i]="E"; $mnlbl[#i]="[選択文字列ﾊﾟｽOpen]";$optS[#i]="selectstr-opendir.mac";#optN[#i]=0;
+	#i=#i+1;#mID[#i]=0;$mTp[#i]="E"; $mnlbl[#i]="[ActiveFileﾃﾞｨﾚｸﾄﾘOpen]";$optS[#i]="opendir-activefile.mac";#optN[#i]=0;
+	#i=#i+1;#mID[#i]=0;$mTp[#i]="E"; $mnlbl[#i]="[CurrentﾏｸﾛﾃﾞｨﾚｸﾄﾘOpen]";$optS[#i]="currentmacro-opendir.mac";#optN[#i]=0;
+	#i=#i+1;#mID[#i]=0;$mTp[#i]="E"; $mnlbl[#i]="[秀丸ﾏｸﾛﾃﾞｨﾚｸﾄﾘOpen]";$optS[#i]="hidemacro-opendir.mac";#optN[#i]=0;
+return;
+MakeMenuHistCont1000:
+	#i=#i+1;#mID[#i]=1003;$mTp[#i]="MS";$optS[#i]="";#optN[#i]=0; $mnlbl[#i]="&X)[メニュー1003]";
+	#i=#i+1;#mID[#i]=1004;$mTp[#i]="MS";$optS[#i]="";#optN[#i]=0; $mnlbl[#i]="&X)[メニュー1004]";
+	#i=#i+1;#mID[#i]=1005;$mTp[#i]="MS";$optS[#i]="";#optN[#i]=0; $mnlbl[#i]="&X)[メニュー1005]";
+return;
+MakeMenuCont000Top:
+	call rptchr "-", 20;
+	$s1 = $$return;
+	$lb="--- (20) ";#i=#i+1;#mID[#i]=1;$mTp[#i]="I"; $optS[#i]=$s1;$mnlbl[#i]=$lb;#optN[#i]=1;
+return;
